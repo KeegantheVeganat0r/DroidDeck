@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "startedUtc": "2026-11-07T00:56:07.798257+00:00",
+    "package": "com.droiddeck.launcher.hudgraph",
+    "appPid": 15808,
+    "uid": 10336,
+    "cpuOnline": "0-7",
+    "clkTck": 100,
+    "settingsBefore": {
+      "peak_refresh_rate": "Infinity",
+      "min_refresh_rate": "0.0"
+    },
+    "warmupSeconds": 5,
+    "sampleSeconds": 25,
+    "syntheticFrames": false,
+    "workloads": {
+      "idle": "Untouched Steam home screen",
+      "navigation": "Alternating real DPAD Right/Left every 0.125 seconds"
+    },
+    "initialThermal": {
+      "batteryTempTenthsC": 270,
+      "status": 0
+    }
+  },
+  "groups": {
+    "off": {
+      "n": 3,
+      "cpuPercentOneCore": {
+        "mean": 14.137525869886622,
+        "min": 14.1001479686448,
+        "max": 14.172210256076918
+      },
+      "mainCpuPercentOneCore": {
+        "mean": 1.663262327300639,
+        "min": 1.6407405760244074,
+        "max": 1.6750618748829633
+      },
+      "uidCpuPercentOneCore": {
+        "mean": 190.62404400948355,
+        "min": 187.65441938324832,
+        "max": 194.40991298044275
+      },
+      "steamFps": {
+        "mean": 60.19275656892937,
+        "min": 60.13238695261711,
+        "max": 60.31198620515386
+      },
+      "hudDrawsPerSecond": 0.0,
+      "inputEvents": [
+        192,
+        189,
+        190
+      ],
+      "focusLost": 0,
+      "thermalStatuses": [
+        0
+      ],
+      "disappearedProcesses": [],
+      "uiFrames": 0,
+      "slowUiFrames": 0
+    },
+    "hardware15": {
+      "n": 3,
+      "cpuPercentOneCore": {
+        "mean": 29.91846213181946,
+        "min": 28.7116765859326,
+        "max": 31.660128697156747
+      },
+      "mainCpuPercentOneCore": {
+        "mean": 5.407209637856234,
+        "min": 5.375547695052147,
+        "max": 5.458025398654924
+      },
+      "uidCpuPercentOneCore": {
+        "mean": 181.12074977088895,
+        "min": 177.32,
+        "max": 184.15865481317027
+      },
+      "steamFps": {
+        "mean": 60.15365323080743,
+        "min": 60.08154780939415,
+        "max": 60.2
+      },
+      "frameP95Ms": {
+        "mean": 5.342212,
+        "min": 5.249327,
+        "max": 5.467942
+      },
+      "drawP95Ms": {
+        "mean": 0.6461806666666666,
+        "min": 0.631719,
+        "max": 0.673334
+      },
+      "gpuP95Ms": {
+        "mean": 2.157101,
+        "min": 1.668281,
+        "max": 2.565105
+      },
+      "hudDrawsPerSecond": 16.506548712676736,
+      "inputEvents": [
+        200,
+        200,
+        196
+      ],
+      "focusLost": 0,
+      "thermalStatuses": [
+        0
+      ],
+      "disappearedProcesses": [],
+      "uiFrames": 1237,
+      "slowUiFrames": 0
+    },
+    "software15": {
+      "n": 3,
+      "cpuPercentOneCore": {
+        "mean": 30.706147424972343,
+        "min": 28.47149891300773,
+        "max": 31.827508542528893
+      },
+      "mainCpuPercentOneCore": {
+        "mean": 6.89758275835457,
+        "min": 6.828236927281699,
+        "max": 6.955230568360017
+      },
+      "uidCpuPercentOneCore": {
+        "mean": 182.6283461829605,
+        "min": 181.06532663316582,
+        "max": 184.3732433954692
+      },
+      "steamFps": {
+        "mean": 60.17679949525649,
+        "min": 60.12304250557718,
+        "max": 60.226451457579216
+      },
+      "frameP95Ms": {
+        "mean": 7.749943666666667,
+        "min": 6.293582,
+        "max": 8.516906
+      },
+      "drawP95Ms": {
+        "mean": 2.155816,
+        "min": 2.028125,
+        "max": 2.230885
+      },
+      "gpuP95Ms": {
+        "mean": 4.431979,
+        "min": 2.509323,
+        "max": 5.406302
+      },
+      "hudDrawsPerSecond": 16.466387885808192,
+      "inputEvents": [
+        201,
+        199,
+        196
+      ],
+      "focusLost": 0,
+      "thermalStatuses": [
+        0
+      ],
+      "disappearedProcesses": [],
+      "uiFrames": 1235,
+      "slowUiFrames": 0
+    },
+    "software60": {
+      "n": 2,
+      "cpuPercentOneCore": {
+        "mean": 42.165632393101006,
+        "min": 41.51696424644073,
+        "max": 42.814300539761284
+      },
+      "mainCpuPercentOneCore": {
+        "mean": 12.87878817022272,
+        "min": 12.857217932977298,
+        "max": 12.900358407468142
+      },
+      "uidCpuPercentOneCore": {
+        "mean": 196.60989244580043,
+        "min": 196.21549957813508,
+        "max": 197.00428531346577
+      },
+      "steamFps": {
+        "mean": 60.168556219493844,
+        "min": 60.11454203202117,
+        "max": 60.22257040696652
+      },
+      "frameP95Ms": {
+        "mean": 6.1749505,
+        "min": 5.259616,
+        "max": 7.090285
+      },
+      "drawP95Ms": {
+        "mean": 1.8423699999999998,
+        "min": 1.742813,
+        "max": 1.941927
+      },
+      "gpuP95Ms": {
+        "mean": 3.2870575000000004,
+        "min": 2.117188,
+        "max": 4.456927
+      },
+      "hudDrawsPerSecond": 57.83671918423873,
+      "inputEvents": [
+        196,
+        196
+      ],
+      "focusLost": 0,
+      "thermalStatuses": [
+        0
+      ],
+      "disappearedProcesses": [],
+      "uiFrames": 2890,
+      "slowUiFrames": 0
+    }
+  },
+  "pairedSoftwareMinusHardware": [
+    {
+      "repeat": 1,
+      "cpuPercentOneCore": -0.9120821993613042,
+      "mainCpuPercentOneCore": 1.5337330843698478,
+      "uidCpuPercentOneCore": 0.5628740207498879,
+      "steamFps": 0.04149469618302959,
+      "frameP95Ms": 0.8256399999999999,
+      "drawP95Ms": 1.5749490000000002,
+      "gpuP95Ms": -0.055781999999999776
+    },
+    {
+      "repeat": 2,
+      "cpuPercentOneCore": 3.1077582334478073,
+      "mainCpuPercentOneCore": 1.5671747484983838,
+      "uidCpuPercentOneCore": -3.0933281800044483,
+      "steamFps": 0.0014926395849386154,
+      "frameP95Ms": 3.129975999999999,
+      "drawP95Ms": 1.5991659999999999,
+      "gpuP95Ms": 3.712031
+    },
+    {
+      "repeat": 3,
+      "cpuPercentOneCore": 0.167379845372146,
+      "mainCpuPercentOneCore": 1.3702115286267746,
+      "uidCpuPercentOneCore": 7.053243395469195,
+      "steamFps": 0.02645145757921341,
+      "frameP95Ms": 3.2675790000000005,
+      "drawP95Ms": 1.354791,
+      "gpuP95Ms": 3.1683850000000002
+    }
+  ],
+  "completeRuns": 11
+}

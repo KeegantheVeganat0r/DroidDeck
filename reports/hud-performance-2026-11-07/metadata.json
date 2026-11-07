@@ -1,0 +1,23 @@
+{
+  "startedUtc": "2026-11-07T00:56:07.798257+00:00",
+  "package": "com.droiddeck.launcher.hudgraph",
+  "appPid": 15808,
+  "uid": 10336,
+  "cpuOnline": "0-7",
+  "clkTck": 100,
+  "settingsBefore": {
+    "peak_refresh_rate": "Infinity",
+    "min_refresh_rate": "0.0"
+  },
+  "warmupSeconds": 5,
+  "sampleSeconds": 25,
+  "syntheticFrames": false,
+  "workloads": {
+    "idle": "Untouched Steam home screen",
+    "navigation": "Alternating real DPAD Right/Left every 0.125 seconds"
+  },
+  "initialThermal": {
+    "batteryTempTenthsC": 270,
+    "status": 0
+  }
+}
