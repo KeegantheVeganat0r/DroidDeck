@@ -9,6 +9,7 @@ PRELOAD = Path(__file__).resolve().parents[1] / "linuxfs/preload"
 
 PROGRAM = r"""
 #define _GNU_SOURCE
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
@@ -62,6 +63,8 @@ static void *writer(void *arg) {
 }
 
 int main(int argc, char **argv) {
+  void (*init)(void) = dlsym(RTLD_DEFAULT, "zr_test_init");
+  if (init) init();
   ctl = argv[1];
   size = strtoul(argv[2], NULL, 0) << 20;
   int cycles = atoi(argv[3]);
@@ -115,11 +118,20 @@ class ZramPreloadTest(unittest.TestCase):
         build = cls.dir / "build"
         build.mkdir()
         (build / "program.c").write_text(PROGRAM)
+        (build / "zram-test.c").write_text(
+            '#include "' + str(PRELOAD / 'zram.c') + '"\n'
+            'void zr_test_init(void) {\n'
+            '  struct sigaction sa = {.sa_handler = SIG_DFL};\n'
+            '  sigemptyset(&sa.sa_mask);\n'
+            '  sigaction(SIGURG, &sa, NULL);\n'
+            '  zr_init();\n'
+            '}\n')
         cls.lib = build / "libblsession.so"
         subprocess.run(["cc", "-shared", "-fPIC", "-O2", "-Wall", "-pthread", "-DZR_CTL=\"%s\"" % cls.ctl,
-                        "-o", str(cls.lib), *map(str, sorted(PRELOAD.glob("*.c"))), "-ldl"], check=True)
+                        "-o", str(cls.lib), str(build / "zram-test.c"),
+                        *map(str, sorted(p for p in PRELOAD.glob("*.c") if p.name != 'zram.c')), "-ldl"], check=True)
         cls.steam = cls.dir / "steam"
-        subprocess.run(["cc", "-O2", "-pthread", "-o", str(cls.steam), str(build / "program.c")], check=True)
+        subprocess.run(["cc", "-O2", "-pthread", "-o", str(cls.steam), str(build / "program.c"), "-ldl"], check=True)
         cls.game = cls.dir / "game"
         shutil.copy(cls.steam, cls.game)
 
@@ -172,6 +184,63 @@ class ZramPreloadTest(unittest.TestCase):
         out = self.run_program(mb=32, cycles=6)
         self.assertEqual([1], out["intact"])
         self.assertEqual(6, len(out["out"]))
+
+
+@unittest.skipUnless(shutil.which("cc"), "needs a C compiler")
+class NativeZramControlTest(unittest.TestCase):
+    def test_native_control_file_and_acknowledgement_use_host_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            virtual = '/tmp/' + folder.name + '-native-zram'
+            root = folder / 'guest'
+            ctl = root / virtual.lstrip('/')
+            ctl.parent.mkdir(parents=True)
+            ctl.write_text('1')
+            self.check_control(folder, virtual, str(root) + '/', ctl, True)
+
+    def test_already_mapped_control_path_is_not_prefixed_twice(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            root = folder / 'guest'
+            root.mkdir()
+            ctl = root / 'ctl'
+            ctl.write_text('1')
+            self.check_control(folder, str(ctl), str(root), ctl, True)
+
+    def test_native_mode_without_its_control_file_installs_no_handler(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            self.check_control(folder, '/tmp/' + folder.name + '-missing',
+                               str(folder / 'guest'), folder / 'missing', False)
+
+    def check_control(self, folder, virtual, root, ctl, enabled):
+        source = folder / 'probe.c'
+        source.write_text(
+            '#define ZR_CTL "' + virtual + '"\n'
+            '#include "' + str(PRELOAD / 'zram.c') + '"\n'
+            '#include <stdio.h>\n'
+            'int main(int argc, char **argv) {\n'
+            '  (void)argc;\n'
+            '  setenv("DDNATV_ROOT", argv[1], 1);\n'
+            '  struct sigaction reset = {.sa_handler = SIG_DFL};\n'
+            '  sigemptyset(&reset.sa_mask);\n'
+            '  sigaction(SIGURG, &reset, NULL);\n'
+            '  zr_init();\n'
+            '  struct sigaction sa;\n'
+            '  sigaction(SIGURG, NULL, &sa);\n'
+            '  int installed = !!(sa.sa_flags & SA_SIGINFO);\n'
+            '  printf("%d\\n", installed);\n'
+            '  if (installed) kill(getpid(), SIGURG);\n'
+            '  return 0;\n'
+            '}\n')
+        program = folder / 'probe'
+        subprocess.run(['cc', '-O2', '-Wall', '-Wextra', '-Werror', '-pthread',
+                        '-o', str(program), str(source), '-ldl'], check=True)
+        result = subprocess.run([str(program), root], capture_output=True, text=True,
+                                check=True, timeout=15)
+        self.assertEqual(str(int(enabled)), result.stdout.strip(), result.stderr)
+        acks = list(ctl.parent.glob(ctl.name + '.ack.*'))
+        self.assertEqual(['1'] if enabled else [], [p.read_text() for p in acks])
 
 
 if __name__ == "__main__":

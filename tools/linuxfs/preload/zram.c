@@ -2,9 +2,11 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
@@ -25,10 +27,24 @@ static long (*zr_sys)(long, ...);
 static unsigned long zr_page;
 static int zr_busy;
 static int zr_pending;
+static char zr_ctl[PATH_MAX];
 static char zr_maps[8192];
 static uint64_t zr_entries[ZR_BATCH];
 static struct iovec zr_iov[ZR_BATCH];
 static char zr_sink[ZR_BATCH];
+
+static int zr_control_path(void) {
+  const char *root = getenv("DDNATV_ROOT");
+  size_t n = root ? strnlen(root, sizeof(zr_ctl)) : 0;
+  if (n == sizeof(zr_ctl)) return 0;
+  while (n && root[n - 1] == '/') n--;
+  if (!n || root[0] != '/' || ZR_CTL[0] != '/'
+      || (strncmp(ZR_CTL, root, n) == 0 && (ZR_CTL[n] == '/' || ZR_CTL[n] == 0))) n = 0;
+  if (n + sizeof(ZR_CTL) > sizeof(zr_ctl)) return 0;
+  if (n) memcpy(zr_ctl, root, n);
+  memcpy(zr_ctl + n, ZR_CTL, sizeof(ZR_CTL));
+  return 1;
+}
 
 static int zr_open(const char *path) {
   return (int)zr_sys(SYS_openat, AT_FDCWD, path, O_RDONLY | O_CLOEXEC, 0);
@@ -36,7 +52,7 @@ static int zr_open(const char *path) {
 
 static int zr_mode(void) {
   char c = 0;
-  int fd = zr_open(ZR_CTL);
+  int fd = zr_open(zr_ctl);
   if (fd < 0) return -1;
   long n = zr_sys(SYS_read, fd, &c, 1);
   zr_sys(SYS_close, fd);
@@ -128,10 +144,10 @@ static void zr_walk(int compress) {
 
 static void zr_ack(int done) {
   static const char suffix[] = ".ack.";
-  char path[sizeof(ZR_CTL) + sizeof(suffix) + 20];
+  char path[sizeof(zr_ctl) + sizeof(suffix) + 20];
   char digits[20];
   size_t n = 0, d = 0;
-  for (const char *p = ZR_CTL; *p; p++) path[n++] = *p;
+  for (const char *p = zr_ctl; *p; p++) path[n++] = *p;
   for (const char *p = suffix; *p; p++) path[n++] = *p;
   long pid = zr_sys(SYS_getpid);
   do digits[d++] = (char)('0' + pid % 10); while ((pid /= 10) > 0);
@@ -167,11 +183,13 @@ static void zr_child(void) {
 }
 
 __attribute__((constructor)) static void zr_init(void) {
+  // These raw libc syscalls bypass the native guest's pathname hook.
+  if (!zr_control_path()) return;
   void *libc = dlopen("libc.so.6", RTLD_LAZY | RTLD_NOLOAD);
   if (libc == NULL) return;
   zr_sys = (long (*)(long, ...))dlsym(libc, "syscall");
   if (zr_sys == NULL) return;
-  int fd = zr_open(ZR_CTL);
+  int fd = zr_open(zr_ctl);
   if (fd < 0) return;
   zr_sys(SYS_close, fd);
   long page = sysconf(_SC_PAGESIZE);

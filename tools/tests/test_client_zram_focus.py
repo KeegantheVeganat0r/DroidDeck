@@ -78,6 +78,33 @@ class ClientZramFocusTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual('|6000021 6000022 6000020|0', result.stdout.strip())
 
+    def test_native_loader_exposes_the_game_and_client_to_memory_reclaim(self):
+        loader = '/data/user/0/com.tencent.ig/files/linuxfs/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1'
+        def native(program, *args):
+            return [loader, '--preload', '/usr/lib/libddnatv-hook.so',
+                    '--library-path', '/usr/lib:/usr/local/lib', '--argv0', program, program, *args]
+        result = self.scan_fake([
+            (6000030, native('/s/steamrtarm64/steam', '-gamepadui')),
+            (6000031, native('/s/reaper', 'SteamLaunch', 'AppId=1369670', '--', 'game')),
+            (6000032, native('/usr/bin/FEX', '/s/steamwebhelper')),
+            (6000033, native('/usr/bin/wine', 'game.exe')),
+            (6000034, native('/s/reaper', 'SteamLaunch', 'AppId=769', '--')),
+        ])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('', result.stderr)
+        self.assertEqual('6000030 6000032|6000033|1', result.stdout.strip())
+
+    def test_loader_argv0_does_not_replace_the_actual_executable(self):
+        result = self.scan_fake([
+            (6000040, ['/lib/ld-linux-aarch64.so.1', '--argv0', '/s/reaper', '/usr/bin/other', 'AppId=123']),
+            (6000041, ['/lib/ld-linux-aarch64.so.1', '--library-path=/lib', '--', '/s/steamwebhelper']),
+            (6000042, ['/lib/ld-linux-aarch64.so.1', '--argv0']),
+            (6000043, ['/lib/ld-linux-aarch64.so.1', '--list', '/s/reaper', 'AppId=123']),
+        ])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('', result.stderr)
+        self.assertEqual('6000041|6000040 6000042 6000043|0', result.stdout.strip())
+
     def test_refocus_restarts_the_delay_and_game_exit_restores_a_packed_client(self):
         source = SCRIPT.read_text()
         start = source.index('          if [ "$_bl_game" = 1 ] && bl_game_focused; then')

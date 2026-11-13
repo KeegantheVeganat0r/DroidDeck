@@ -1,5 +1,25 @@
 # Low-memory reclaim and userspace compression
 
+## Native session process and control paths
+
+Native sessions retain glibc loader arguments in `/proc/<pid>/cmdline`.
+The memory monitor unwraps the loader's options before recognizing Steam,
+its web helpers, FEX and game reapers. A read-only comparison in a native
+Motor Town session found no game or client processes with the old scanner;
+the corrected scanner found app 1369670 and five client processes.
+
+The preload's raw libc syscalls bypass the native pathname hook. Its control
+file and acknowledgement paths therefore use `DDNATV_ROOT` in native sessions,
+while `/proc` remains the real process filesystem. Already mapped control
+paths are preserved, and overlong paths disable the helper instead of being
+truncated. PRoot sessions retain the existing control path.
+
+These changes restore the existing reclaim policy; they do not change the
+game's allocations or establish a reduction in a game's peak memory usage.
+Regression coverage includes loader-wrapped processes, native control-file
+acknowledgements, missing files, page-out/readback and concurrent data integrity:
+`python3 -m unittest tools.tests.test_client_zram_focus tools.tests.test_memory_pressure tools.tests.test_zram_preload`.
+
 The Steam session monitor uses the existing `libblsession.so` page-out request to reclaim
 private anonymous launcher memory. The default remains a request 20 seconds after game focus,
 with five minutes between requests. With client compression enabled, low system headroom can
