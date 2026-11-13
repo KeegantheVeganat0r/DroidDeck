@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import com.droiddeck.launcher.R
+import com.droiddeck.launcher.agent.AgentEnv
 import com.droiddeck.launcher.core.FileUtils
 import com.droiddeck.launcher.runtime.BwrapSpawner
 import com.droiddeck.launcher.runtime.DesktopCatalog
@@ -238,12 +239,16 @@ object SessionFiles {
         val ledger = StageLedger(File(root, STAGED_LEDGER), apkIdentity(context))
         for ((asset, relative) in all) {
             val target = File(root, relative)
-            if (ledger.current(relative, target)) continue
+            val replacement = when (asset) {
+                "libblsession.so", "usr/local/bin/droiddeck-session" -> AgentEnv.sessionFileOverride(context, asset.substringAfterLast('/'))
+                else -> null
+            }
+            if (replacement == null && ledger.current(relative, target)) continue
             val staged = File(target.parentFile, target.name + ".staged")
             var installed = false
             try {
                 target.parentFile?.mkdirs()
-                (if (asset.startsWith("rockstar/")) requireNotNull(javaClass.getResourceAsStream("/$asset")) else context.assets.open("linuxfs/$asset")).use { input ->
+                (replacement?.inputStream() ?: if (asset.startsWith("rockstar/")) requireNotNull(javaClass.getResourceAsStream("/$asset")) else context.assets.open("linuxfs/$asset")).use { input ->
                     staged.outputStream().use { output -> FileUtils.copy(input, output) }
                 }
                 installed = staged.setExecutable(true, false) && staged.renameTo(target)
@@ -252,7 +257,9 @@ object SessionFiles {
             } finally {
                 if (!installed) staged.delete()
             }
-            if (installed) ledger.staged(relative, target) else Log.e(TAG, "$relative NOT staged")
+            if (installed) {
+                if (replacement == null) ledger.staged(relative, target)
+            } else Log.e(TAG, "$relative NOT staged")
         }
         File(root, "usr/local/bin/bannerlator-steam-compat").delete()
         LegacyNames.migrateRootfs(root)

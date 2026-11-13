@@ -195,6 +195,29 @@ class AgentSecurityTest {
         assertTrue(AgentEnv.beginSession(context).none { it.startsWith("PATH=") })
     }
 
+    @Test fun sessionFileOverridesAreOptInAndLastOneSession() {
+        AgentAccess.setCommandsEnabled(context, true)
+        AgentEnv.inbox(context).apply { mkdirs() }.resolve("droiddeck-session").writeText("#!/bin/sh\nexit 0\n")
+        AgentEnv.override(context, "droiddeck-session")
+        assertNull(AgentEnv.sessionFileOverride(context, "droiddeck-session"))
+        AgentEnv.beginSession(context)
+        assertNotNull(AgentEnv.sessionFileOverride(context, "droiddeck-session"))
+        assertNull(AgentEnv.sessionFileOverride(context, "../droiddeck-session"))
+        assertNull(AgentEnv.sessionFileOverride(context, "gamescope"))
+        AgentEnv.beginSession(context)
+        assertNull(AgentEnv.sessionFileOverride(context, "droiddeck-session"))
+    }
+
+    @Test fun sessionLibraryOverrideRejectsNonArm64Libraries() {
+        AgentAccess.setCommandsEnabled(context, true)
+        AgentEnv.inbox(context).apply { mkdirs() }.resolve("libblsession.so").writeText("not a library")
+        AgentEnv.override(context, "libblsession.so")
+        AgentEnv.beginSession(context)
+        assertNull(AgentEnv.sessionFileOverride(context, "libblsession.so"))
+        AgentAccess.setCommandsEnabled(context, false)
+        assertNull(AgentEnv.sessionFileOverride(context, "droiddeck-session"))
+    }
+
     @Test fun binaryOverridesKeepExplicitPathsAndPendingPathPrecedence() {
         AgentAccess.setCommandsEnabled(context, true)
         AgentEnv.set(context, listOf("PATH=/custom/persistent"), true)

@@ -109,6 +109,13 @@ object AgentEnv {
         "$GUEST_BIN/libblfastpath.so"
     }
 
+    fun sessionFileOverride(context: Context, name: String): File? = synchronized(lock) {
+        if (name !in setOf("droiddeck-session", "libblsession.so") || !AgentAccess.commandsAllowed(context)) return@synchronized null
+        if (name !in strings(load(context).optJSONArray("activeOverrides"))) return@synchronized null
+        File(bin(context), name).takeIf { it.isFile && !Files.isSymbolicLink(it.toPath()) &&
+            (name != "libblsession.so" || arm64SharedLibrary(it)) }
+    }
+
     private fun arm64SharedLibrary(file: File): Boolean = file.inputStream().use { input ->
         val header = ByteArray(20)
         var count = 0
